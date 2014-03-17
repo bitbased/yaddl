@@ -70,6 +70,8 @@ Legend:
 - if, unless, def, module, class - ruby code blocks (else and elsif are not currently supported at root)
 - include, require, has_many, serialize, etc. - single line ruby methods
 
+---
+
 # Example Yaddl File
 
 /db/photo_gallery.yaddl
@@ -111,4 +113,64 @@ User(email:string)
   User
   *Comment
     @Commentable # You can nest anything
+```
+
+# Example Output
+
+### Migrations
+
+/db/schema.rb
+```ruby
+ActiveRecord::Schema.define(version: 20140317225532) do
+
+  create_table "comments", force: true do |t|
+    t.integer  "gallery_id"
+    t.integer  "photo_id"
+    t.integer  "comment_id"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  add_index "comments", ["comment_id"], name: "index_comments_on_comment_id"
+  add_index "comments", ["gallery_id"], name: "index_comments_on_gallery_id"
+  add_index "comments", ["photo_id"], name: "index_comments_on_photo_id"
+
+  create_table "galleries", force: true do |t|
+    t.string   "name"
+    t.text     "description"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  create_table "photos", force: true do |t|
+    t.string   "name"
+    t.datetime "taken_at"
+    t.text     "image_src"
+    t.text     "thumb_src"
+    t.text     "description"
+    t.integer  "gallery_id"
+    t.integer  "photographer_id"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  add_index "photos", ["gallery_id"], name: "index_photos_on_gallery_id"
+  add_index "photos", ["photographer_id"], name: "index_photos_on_photographer_id"
+
+  create_table "users", force: true do |t|
+    t.string   "email"
+    t.string   "name"
+    t.string   "password_digest"
+    t.integer  "gallery_id"
+    t.integer  "photo_id"
+    t.integer  "comment_id"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  add_index "users", ["comment_id"], name: "index_users_on_comment_id"
+  add_index "users", ["gallery_id"], name: "index_users_on_gallery_id"
+  add_index "users", ["photo_id"], name: "index_users_on_photo_id"
+
+end
 ```
