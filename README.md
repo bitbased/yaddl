@@ -4,6 +4,8 @@ This project rocks and uses MIT-LICENSE.
 
 # Usage
 
+`gem 'yaddl'`
+
 ```
 rake yaddl:models
 rake yaddl:migrations
