@@ -1,3 +1,5 @@
+require 'yaddl'
+
 namespace :yaddl do
   desc "Print generated yaml ddl to console"
   task :review do

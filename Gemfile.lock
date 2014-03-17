@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    yaddl (0.0.1)
+    yaddl (0.0.2)
       rails (~> 4.0.0)
 
 GEM
@@ -84,6 +84,5 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  rails (= 4.0.4)
   sqlite3
   yaddl!
