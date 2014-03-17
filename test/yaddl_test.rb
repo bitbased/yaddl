@@ -9,15 +9,21 @@ class YaddlTest < ActiveSupport::TestCase
     y = Yaddl::Generator.new
     y.markup = "TestModel(name:string)
   =to_s{name}
-  *RelatedModel"
+  *ChildModel
+  +RelatedModel
+  ReferencedModel"
     y.generate("--no-scaffolds --quiet")
     y.generate("--migrations-only --quiet")
     assert_file "app/models/test_model.rb", "class TestModel < ActiveRecord::Base
-  has_many :related_models, dependent: :destroy
+  belongs_to :related_model
+  has_one :referenced_model, dependent: :destroy
+  has_many :child_models, dependent: :destroy
 
+  attr_accessible :related_model_id
   attr_accessible :name
 
-  accepts_nested_attributes_for :related_models
+  accepts_nested_attributes_for :referenced_model
+  accepts_nested_attributes_for :child_models
 
   # returns: string
   def to_s
@@ -27,9 +33,8 @@ end
 "
 
     assert_file "app/models/related_model.rb", "class RelatedModel < ActiveRecord::Base
-  belongs_to :test_model
+  has_many :test_models, dependent: :nullify
 
-  attr_accessible :test_model_id
 end
 "
 
@@ -45,11 +50,31 @@ TestModel:
       returns: string
       getter: name
   has_many:
-    related_models:
+    child_models:
       dependent: destroy
       class_names:
+      - ChildModel
+  belongs_to:
+    related_model:
+      class_names:
       - RelatedModel
+  has_one:
+    referenced_model:
+      dependent: destroy
+      class_names:
+      - ReferencedModel
+ChildModel:
+  belongs_to:
+    test_model:
+      class_names:
+      - TestModel
 RelatedModel:
+  has_many:
+    test_models:
+      dependent: nullify
+      class_names:
+      - RelatedModel
+ReferencedModel:
   belongs_to:
     test_model:
       class_names:

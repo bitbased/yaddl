@@ -109,7 +109,7 @@ class Generator
       model['code']['after'] ||= []
       model['code']['controller'] ||= []
       sc = "rails g model #{name} " + model['attributes'].map{ |k,v| k + ':' + v['type'].sub(/yaml|hash|object|cache/i,"text") }.join(' ') + " " + model['belongs_to'].map{ |k,v| k + ':references' + (v['polymorphic'] ? "{polymorphic}" : "") }.join(' ')
-      puts("migration: cd #{Rails::root} && #{sc} --skip")# unless @quiet
+      puts("migration: cd #{Rails::root} && #{sc} --skip --no-test-framework") unless @quiet
       `cd #{Rails::root} && #{sc} --skip --no-test-framework`
     end if options.include?("--migrations-only")
 
