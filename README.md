@@ -6,6 +6,7 @@ This project rocks and uses MIT-LICENSE.
 
 ```
 rake yaddl:models
+rake yaddl:migrations
 ```
 
 ### Example Input
@@ -20,7 +21,7 @@ TestModel(name:string)
 ### Output
 
 /app/models/test_model.rb
-```
+```ruby
 class TestModel < ActiveRecord::Base
   has_many :related_models, dependent: :destroy
 
@@ -37,7 +38,7 @@ end
 ```
 
 /app/models/related_model.rb
-```
+```ruby
 class RelatedModel < ActiveRecord::Base
   belongs_to :test_model
 
