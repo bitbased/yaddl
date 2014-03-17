@@ -1,5 +1,8 @@
 module Yaddl
   require "yaddl/railtie" if defined?(Rails)
+
+  require "rails"
+  require "rails/generators/migration"
 class Generator
 
   attr_accessor :markup
@@ -92,8 +95,32 @@ class Generator
       sc = "rails g scaffold #{name} " + model['attributes'].reject{ | k, v| v['hidden'] }.map{ |k,v| k + ':' + v['type'].sub(/yaml|hash|object|cache/i,"text") }.join(' ') + " " + model['belongs_to'].reject{ | k, v| v['hidden'] }.map{ |k,v| k + ':references' + (v['polymorphic'] ? "{polymorphic}" : "") }.join(' ')
       puts("form: #{sc}") unless @quiet
       `#{sc} #{options.gsub("--force","")} --skip --no-migrations`
-    end if !options.include?("--no-scaffold")
+    end if !options.include?("--no-scaffold") && !options.include?("--migrations-only")
 
+    models.reject{ |k,v| k[0] == "@"}.each do |name,model|
+      model['has_one'] ||= {}
+      model['has_many'] ||= {}
+      model['belongs_to'] ||= {}
+      model['attributes'] ||= {}
+      model['methods'] ||= {}
+      model['code'] ||= {}
+      model['code']['top'] ||= []
+      model['code']['before'] ||= []
+      model['code']['after'] ||= []
+      model['code']['controller'] ||= []
+      sc = "rails g model #{name} " + model['attributes'].map{ |k,v| k + ':' + v['type'].sub(/yaml|hash|object|cache/i,"text") }.join(' ') + " " + model['belongs_to'].map{ |k,v| k + ':references' + (v['polymorphic'] ? "{polymorphic}" : "") }.join(' ')
+      puts("migration: cd #{Rails::root} && #{sc} --skip")# unless @quiet
+      `cd #{Rails::root} && #{sc} --skip --no-test-framework`
+    end if options.include?("--migrations-only")
+
+    if options.include?("--migrations-only")
+      cleanup(ddl: true, mixins: false)
+      File.open("#{Rails.root}/db/schema.yaml", "w") do |f|
+        f.write models.to_yaml
+      end
+      puts("","--- DATA #{models.to_yaml}","") unless @quiet
+      return
+    end
 
     models.reject{ |k,v| k[0] == "@"}.each do |name,model|
       model['has_one'] ||= {}

@@ -11,6 +11,7 @@ class YaddlTest < ActiveSupport::TestCase
   =to_s{name}
   *RelatedModel"
     y.generate("--no-scaffolds --quiet")
+    y.generate("--migrations-only --quiet")
     assert_file "app/models/test_model.rb", "class TestModel < ActiveRecord::Base
   has_many :related_models, dependent: :destroy
 

@@ -11,7 +11,12 @@ namespace :yaddl do
     y = Yaddl::Generator::load("#{Rails.root}/db/*.yaddl")
     y.generate("--force --no-assets --skip-migration --helpers=false")
   end
-  desc "Regenerate models, skips migrations"
+  desc "Regenerate migrations only, skips models"
+  task :migrations do
+    y = Yaddl::Generator::load("#{Rails.root}/db/*.yaddl")
+    y.generate("--migrations-only")
+  end
+  desc "Regenerate models only, skips migrations"
   task :models do
     y = Yaddl::Generator::load("#{Rails.root}/db/*.yaddl")
     y.generate("--no-scaffolds")
