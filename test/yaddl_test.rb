@@ -4,6 +4,7 @@ class YaddlTest < ActiveSupport::TestCase
   test "defined" do
     assert_kind_of Module, Yaddl
   end
+
   test "create test model" do
     y = Yaddl::Generator.new
     y.markup = "TestModel(name:string)
@@ -23,19 +24,21 @@ class YaddlTest < ActiveSupport::TestCase
   end
 end
 "
+
     assert_file "app/models/related_model.rb", "class RelatedModel < ActiveRecord::Base
   belongs_to :test_model
 
   attr_accessible :test_model_id
 end
 "
+
     assert_file "db/schema.yaml", "---
 TestModel:
   attributes:
     name:
       type: string
       primary_ref:
-      -
+      - 
   methods:
     to_s:
       returns: string

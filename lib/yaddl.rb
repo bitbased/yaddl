@@ -1,4 +1,5 @@
 module Yaddl
+  require "yaddl/railtie" if defined?(Rails)
 class Generator
 
   attr_accessor :markup
@@ -803,7 +804,6 @@ end.join }        <td><%= link_to 'Show', #{name.underscore} %></td>
     end
 
   end
-
 
 
 

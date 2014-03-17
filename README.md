@@ -1,14 +1,14 @@
-= Yaddl
+# Yaddl
 
 This project rocks and uses MIT-LICENSE.
 
-= Usage
+# Usage
 
 ```
 rake yaddl:models
 ```
 
-== Example Input
+### Example Input
 
 /db/schema.yaddl
 ```ruby
@@ -17,7 +17,7 @@ TestModel(name:string)
   *RelatedModel
 ```
 
-== Output
+### Output
 
 /app/models/test_model.rb
 ```
@@ -46,7 +46,7 @@ end
 
 ```
 
-= Syntax
+# Syntax
 
 Legend:
 - attribute:type - a model attribute; inline format will create 'primary references' for display ex: Model(name:string)
