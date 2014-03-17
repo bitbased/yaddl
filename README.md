@@ -70,8 +70,9 @@ Legend:
 - if, unless, def, module, class - ruby code blocks (else and elsif are not currently supported at root)
 - include, require, has_many, serialize, etc. - single line ruby methods
 
-# Example Scenario
+# Example Yaddl File
 
+/db/photo_gallery.yaddl
 ```ruby
 Gallery(name:string)
   @Descriptable
