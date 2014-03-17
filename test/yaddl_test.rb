@@ -5,7 +5,7 @@ class YaddlTest < ActiveSupport::TestCase
     assert_kind_of Module, Yaddl
   end
   test "create test model" do
-    y = Yaddl::Yaddl.new
+    y = Yaddl::Generator.new
     y.markup = "TestModel(name:string)
   =to_s{name}
   *RelatedModel"
@@ -35,7 +35,7 @@ TestModel:
     name:
       type: string
       primary_ref:
-      - 
+      -
   methods:
     to_s:
       returns: string

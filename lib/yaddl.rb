@@ -1,11 +1,12 @@
-class Yaddl::Yaddl
+module Yaddl
+class Generator
 
   attr_accessor :markup
   attr_accessor :models
   attr_accessor :quiet
 
   def self.load(filename)
-    y = Yaddl.new
+    y = Yaddl::Generator.new
     if filename.include? "*"
       y.markup = ""
       Dir.glob(filename).each do |fn|
@@ -807,4 +808,5 @@ end.join }        <td><%= link_to 'Show', #{name.underscore} %></td>
 
 
 
+end
 end
