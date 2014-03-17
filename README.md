@@ -69,3 +69,45 @@ Legend:
 - !!{ruby_code} - unique ruby_code will be added to model only once
 - if, unless, def, module, class - ruby code blocks (else and elsif are not currently supported at root)
 - include, require, has_many, serialize, etc. - single line ruby methods
+
+# Example Scenario
+
+```ruby
+Gallery(name:string)
+  @Descriptable
+  @Commentable
+
+  User
+
+  *Photo(name:string)
+    @Descriptable
+    @Commentable
+
+    User
+    photographer:User # You can provide names for associations
+
+    taken_at:datetime
+
+    -image_src:text
+    -thumb_src:text
+
+    before_save :generate_thumbnail
+    def generate_thumbnail
+      # generate a thumbnail from image_drc for thumb_src
+    end
+
+User(email:string)
+  !!{has_secure_password}
+  name:string
+  email:string
+  password_digest:string
+  attr_accessible :password
+
+@Descriptable
+  description:text
+
+@Commentable
+  User
+  *Comment
+    @Commentable # You can nest anything
+```
