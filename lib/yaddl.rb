@@ -496,14 +496,14 @@ end.join }        <td><%= link_to 'Show', #{name.underscore} %></td>
 
     @multiline ||= false
     unless @multiline
-      if line.strip =~ /^def .*$/ || line.strip =~ / do \|.+\|$/ || line.strip =~ / do$/ || line.strip =~ /^if / || line.strip =~ /^unless /
+      if line.strip =~ /^(def|module|class|if|unless) / || line.strip =~ / do \|.+\|$/ || line.strip =~ / do$/
         @multiline = true
         @multiline_spaces = spaces
         @multiline_end = /^#{" " * @multiline_spaces}end$/
         @multiline_buffer = line[@multiline_spaces..line.length]
         return
       elsif line.strip =~ /^[a-z_]+ |^acts_as_.*/
-        if line.strip =~ /"^include |^extend |^acts_as_[a-z_]+/
+        if line.strip =~ /"^include |^require |^extend |^acts_as_[a-z_]+/
           line = "!top{#{line.strip}}"
         else
           line = "!!{#{line.strip}}"
