@@ -77,17 +77,19 @@ Legend:
 /db/photo_gallery.yaddl
 ```ruby
 Gallery(name:string)
-  @Descriptable
+  @Describable
   @Commentable
 
   User
 
   *Photo(name:string)
-    @Descriptable
+    @Describable
     @Commentable
 
     User
-    photographer:User # You can provide names for associations
+
+    photographer:User
+    *participant:User
 
     taken_at:datetime
 
@@ -105,14 +107,19 @@ User(email:string)
   email:string
   password_digest:string
   attr_accessible :password
+  =to_s{email}
 
-@Descriptable
+@Describable
   description:text
 
 @Commentable
-  User
   *Comment
-    @Commentable # You can nest anything
+    @Commentable
+    User
+    approved:boolean
+    def approve!
+      self.update_columns(approved: true)
+    end
 ```
 
 # Example Output
@@ -121,9 +128,10 @@ User(email:string)
 
 /db/schema.rb
 ```ruby
-ActiveRecord::Schema.define(version: 20140317225532) do
+ActiveRecord::Schema.define(version: 20140318005217) do
 
   create_table "comments", force: true do |t|
+    t.boolean  "approved"
     t.integer  "gallery_id"
     t.integer  "photo_id"
     t.integer  "comment_id"
@@ -163,6 +171,7 @@ ActiveRecord::Schema.define(version: 20140317225532) do
     t.string   "password_digest"
     t.integer  "gallery_id"
     t.integer  "photo_id"
+    t.integer  "participants_id"
     t.integer  "comment_id"
     t.datetime "created_at"
     t.datetime "updated_at"
@@ -170,7 +179,90 @@ ActiveRecord::Schema.define(version: 20140317225532) do
 
   add_index "users", ["comment_id"], name: "index_users_on_comment_id"
   add_index "users", ["gallery_id"], name: "index_users_on_gallery_id"
+  add_index "users", ["participants_id"], name: "index_users_on_participants_id"
   add_index "users", ["photo_id"], name: "index_users_on_photo_id"
 
+end
+```
+
+/app/models/photo.rb
+```ruby
+class Photo < ActiveRecord::Base
+  belongs_to :gallery
+  belongs_to :photographer, class_name: "User", dependent: :destroy
+  has_one :user, dependent: :destroy
+  has_many :participants, class_name: "User", dependent: :destroy, foreign_key: :participant_id
+  has_many :comments, dependent: :destroy
+
+  attr_accessible :gallery_id, :photographer_id
+  attr_accessible :name, :taken_at, :image_src, :thumb_src, :description
+
+  accepts_nested_attributes_for :user
+  accepts_nested_attributes_for :participants, :comments
+
+  before_save :generate_thumbnail
+
+  def generate_thumbnail
+    # generate a thumbnail from image_drc for thumb_src
+  end
+end
+```
+
+/app/models/gallery.rb
+```ruby
+class Gallery < ActiveRecord::Base
+  has_one :user, dependent: :destroy
+  has_many :photos, dependent: :destroy
+  has_many :comments, dependent: :destroy
+
+  attr_accessible :name, :description
+
+  accepts_nested_attributes_for :user
+  accepts_nested_attributes_for :photos, :comments
+end
+```
+
+/app/models/comment.rb
+```ruby
+class Comment < ActiveRecord::Base
+  belongs_to :gallery
+  belongs_to :photo
+  belongs_to :comment
+  has_one :user, dependent: :destroy
+  has_many :comments, dependent: :destroy
+
+  attr_accessible :gallery_id, :photo_id, :comment_id
+  attr_accessible :approved
+
+  accepts_nested_attributes_for :user
+  accepts_nested_attributes_for :comments
+
+  def approve!
+    self.update_columns(approved: true)
+  end
+end
+```
+
+/app/models/user.rb
+```ruby
+class User < ActiveRecord::Base
+  belongs_to :gallery
+  belongs_to :photo
+  belongs_to :participants, class_name: "Photo"
+  belongs_to :comment
+  has_many :photographer_photos, class_name: "Photo", foreign_key: :photographer_id, dependent: :destroy
+
+  attr_accessible :gallery_id, :photo_id, :participants_id, :comment_id
+  attr_accessible :email, :name, :password_digest
+
+  accepts_nested_attributes_for :photographer_photos
+
+  has_secure_password
+  attr_accessible :password
+
+  # returns: string
+  def to_s
+    email
+  end
 end
 ```
