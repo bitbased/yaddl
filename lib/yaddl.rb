@@ -532,7 +532,7 @@ end.join }        <td><%= link_to 'Show', #{name.underscore} %></td>
         @multiline_buffer = line[@multiline_spaces..line.length]
         return
       elsif line.strip =~ /^[a-z_]+ |^acts_as_.*/
-        if line.strip =~ /"^include |^require |^extend |^acts_as_[a-z_]+/
+        if line.strip =~ /^include |^require |^extend |^acts_as_[a-z_]+/
           line = "!top{#{line.strip}}"
         else
           line = "!!{#{line.strip}}"
