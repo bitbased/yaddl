@@ -597,10 +597,10 @@ end.join }        <td><%= link_to 'Show', #{name.underscore} %></td>
       models[parent]['ddl'] ||= [] if parent
       models[parent]['ddl'] << (parent ? "#{parent} > " : '') + line if parent
 
-      place = line.sub(/^\!\!?(.*\s*)\{.*/m,'\1').strip
+      place = line.sub(/^\!\!?([a-zA-Z_]+\??\!?)\{.*/m,'\1').strip
       place = 'before' if place == ""
       _unique = line[1] == "!"
-      line.sub!(line.sub(/^(\!\!?.*\s*)\{.*/m,'\1'),'')
+      line.sub!(line.sub(/^(\!\!?[a-zA-Z_]+\??\!?)\{.*/m,'\1'),'')
       models[parent]['code'] ||= {} if parent
       models[parent]['code'][place] ||= [] if parent
       if line[0] == "{"
