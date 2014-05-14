@@ -161,8 +161,13 @@ class Generator
 
       attrs = {}
       model['attributes'].each do |k,v|
-        attrs[k] ||= {}
-        attrs[k]['type'] = v['type'].sub(/yaml|hash|object|cache/i, "text")
+        if v['type'] == "references"
+          attrs[k+"_id"] ||= {}
+          attrs[k+"_id"]['type'] ="integer"
+        else
+          attrs[k] ||= {}
+          attrs[k]['type'] = v['type'].sub(/yaml|hash|object|cache/i, "text")
+        end
       end
       model['belongs_to'].each do |k,v|
         attrs[k+"_id"] ||= {}
@@ -198,7 +203,7 @@ class Generator
       if changes.count > 0
         index = ""
         while Dir.glob("#{Rails.root}/db/migrate/*_#{summary}#{v2}#{name.pluralize}#{index}".underscore.downcase+".rb").count > 0
-          index = 1 if index = ""
+          index = 1 if index == ""
           index += 1
         end
 
