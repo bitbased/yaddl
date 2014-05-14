@@ -207,13 +207,14 @@ class Generator
           index += 1
         end
 
-        puts DateTime.now.strftime("%Y%m%d%H%M%S") + "_" + "#{summary}#{v2}#{name.pluralize}#{index}".underscore.downcase + ".rb"
-        File.write("#{Rails.root}/db/migrate/" + DateTime.now.strftime("%Y%m%d%H%M%S") + "_#{summary}#{v2}#{name.pluralize}#{index}".underscore.downcase+".rb", "class #{summary}#{v2}#{ name.pluralize }#{index} < ActiveRecord::Migration
+        puts Time.now.utc.strftime("%Y%m%d%H%M%S") + "_" + "#{summary}#{v2}#{name.pluralize}#{index}".underscore.downcase + ".rb"
+        File.write("#{Rails.root}/db/migrate/" + Time.now.utc.strftime("%Y%m%d%H%M%S") + "_#{summary}#{v2}#{name.pluralize}#{index}".underscore.downcase+".rb", "class #{summary}#{v2}#{ name.pluralize }#{index} < ActiveRecord::Migration
   def change
     #{changes.join("\n    ")}
   end
 end
 ")
+sleep(1)
       end
     end
 
