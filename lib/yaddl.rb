@@ -59,8 +59,165 @@ class Generator
     end
   end
 
+  def schema_diff
+
+    puts("","--- MIGRATIONS ---","") unless @quiet
+
+    schema = {}
+    table_name = nil
+    table_var = nil
+    Dir.glob("#{Rails.root}/db/migrate/*.rb").sort.each do |file|
+      File.read(file).each_line do |line|
+        if line =~ /^\s*create_table \:([a-z_]+) do \|([a-z_])+\|.*$/
+          table_name = line.sub(/^\s*create_table \:([a-z_]+) do \|([a-z_])+\|.*$/, '\1').strip
+          table_var = line.sub(/^\s*create_table \:([a-z_]+) do \|([a-z_])+\|.*$/, '\2').strip
+          schema[table_name] = {}
+        elsif line =~ /^\s*end\s*$/
+          table_name = nil
+          table_var = nil
+          down = false
+        elsif line =~ /^\s*def down.*$/
+        else
+          if table_name
+            if line =~ /^\s*#{table_var}\.([a-z_]+)(\s+|\()\:([a-z_]+).*$/
+              attr_type = line.sub(/^\s*#{table_var}\.([a-z_]+)(\s+|\()\:([a-z_]+).*$/, '\1').strip
+              attr_name = line.sub(/^\s*#{table_var}\.([a-z_]+)(\s+|\()\:([a-z_]+).*$/, '\3').strip
+
+              if attr_type == "references"
+                schema[table_name][attr_name+"_id"] ||= {}
+                schema[table_name][attr_name+"_id"]["type"] = "integer"
+                if line.include?("polymorphic: true")
+                  schema[table_name][attr_name+"_type"] ||= {}
+                  schema[table_name][attr_name+"_type"]["type"] = "string"
+                  #add_index :sync_models, [:model_id, :model_type], name: "index_sync_models_on_model_id_and_model_type"
+                end
+                if line.include?("index: true")
+                  schema[table_name]["_indexes"] = {}
+                  if line.include?("polymorphic: true")
+                    schema[table_name]["_indexes"]["#{attr_name}_id_and_#{attr_name}_type"] = {}
+                  else
+                    schema[table_name]["_indexes"]["#{attr_name}_id"] = {}
+                  end
+                end
+              else
+                schema[table_name][attr_name] ||= {}
+                schema[table_name][attr_name]["type"] = attr_type
+              end
+            end
+            if line =~ /^\s*#{table_var}\.timestamps\s*$/
+              schema[table_name]["created_at"] ||= {}
+              schema[table_name]["created_at"]["type"] = "datetime"
+              schema[table_name]["updated_at"] ||= {}
+              schema[table_name]["updated_at"]["type"] = "datetime"
+            end
+          else
+            if !down
+              if line =~ /^\s*add_index(\s+|\().*$/
+                attr_table= line.sub(/^\s*[a-z_]+(\s+|\()\:([a-z_]+).*,.*\:([a-z_]+).*,.*\:([a-z_]+).*$/,'\2').strip
+                index_column = line.sub(/^\s*[a-z_]+(\s+|\()\:([a-z_]+).*,.*\:([a-z_]+).*,.*\:([a-z_]+).*$/,'\3').strip
+
+                schema[attr_table]["_indexes"] = {}
+                schema[attr_table]["_indexes"][index_column] = {}
+              end
+              if line =~ /^\s*remove_column(\s+|\().*$/
+                attr_table= line.sub(/^\s*[a-z_]+(\s+|\()\:([a-z_]+).*,.*\:([a-z_]+).*$/,'\2').strip
+                attr_name = line.sub(/^\s*[a-z_]+(\s+|\()\:([a-z_]+).*,.*\:([a-z_]+).*$/,'\3').strip
+                schema[attr_table] ||= {}
+                schema[attr_table].delete(attr_name)
+              end
+              if line =~ /^\s*(add_column|change_column)(\s+|\().*$/
+                #add_column(table_name, column_name, type, options)
+                #change_column(table_name, column_name, type, options)
+                attr_table= line.sub(/^\s*[a-z_]+(\s+|\()\:([a-z_]+).*,.*\:([a-z_]+).*,.*\:([a-z_]+).*$/,'\2').strip
+                attr_name = line.sub(/^\s*[a-z_]+(\s+|\()\:([a-z_]+).*,.*\:([a-z_]+).*,.*\:([a-z_]+).*$/,'\3').strip
+                attr_type = line.sub(/^\s*[a-z_]+(\s+|\()\:([a-z_]+).*,.*\:([a-z_]+).*,.*\:([a-z_]+).*$/,'\4').strip
+
+                schema[attr_table] ||= {}
+                attr_changed = !!schema[attr_table][attr_name]
+                schema[attr_table][attr_name] ||= {}
+                schema[attr_table][attr_name]["type"] = attr_type
+              end
+            end
+          end
+        end
+      end
+    end
+
+
+    models.reject{ |k,v| k[0] == "@"}.each do |name,model|
+      model['has_one'] ||= {}
+      model['has_many'] ||= {}
+      model['belongs_to'] ||= {}
+      model['attributes'] ||= {}
+      model['methods'] ||= {}
+      model['code'] ||= {}
+      model['code']['top'] ||= []
+      model['code']['before'] ||= []
+      model['code']['after'] ||= []
+      model['code']['controller'] ||= []
+
+      table_name = name.pluralize.underscore.downcase
+      next unless schema[table_name]
+
+      attrs = {}
+      model['attributes'].each do |k,v|
+        attrs[k] ||= {}
+        attrs[k]['type'] = v['type'].sub(/yaml|hash|object|cache/i, "text")
+      end
+      model['belongs_to'].each do |k,v|
+        attrs[k+"_id"] ||= {}
+        attrs[k+"_id"]['type'] = 'integer'
+        if v['polymorphic']
+          attrs[k+"_type"] ||= {}
+          attrs[k+"_type"]['type'] = 'string'
+        end
+      end
+
+      changes = []
+      summary = []
+      verb = ""
+      attrs.each do |k,v|
+        if schema[table_name][k]
+          if schema[table_name][k]['type'] != v['type']
+            verb = "Change" if verb == ""
+            verb = "Update" if verb == "Add"
+            summary << k
+            changes << "change_column :#{table_name}, :#{k}, :#{v['type']}"
+          end
+        else
+          verb = "Add" if verb == ""
+          verb = "Update" if verb == "Change"
+          summary << k
+          changes << "add_column :#{table_name}, :#{k}, :#{v['type']}"
+        end
+      end
+
+      summary = [summary.first,"others"] if summary.count > 2
+      summary = verb + summary.join("_and_").camelize
+      v2 = verb == "Add" ? "To" : "On"
+      if changes.count > 0
+        index = ""
+        while Dir.glob("#{Rails.root}/db/migrate/*_#{summary}#{v2}#{name.pluralize}#{index}".underscore.downcase+".rb").count > 0
+          index = 1 if index = ""
+          index += 1
+        end
+
+        puts DateTime.now.strftime("%Y%m%d%H%M%S") + "_#{summary}#{v2}#{name.pluralize}#{index}".underscore.downcase + ".rb"
+        File.write("#{Rails.root}/db/migrate/" + DateTime.now.strftime("%Y%m%d%H%M%S") + "_#{summary}#{v2}#{name.pluralize}#{index}".underscore.downcase+".rb", "class #{summary}#{v2}#{ name.pluralize }#{index} < ActiveRecord::Migration
+  def change
+    #{changes.join("\n    ")}
+  end
+end
+")
+      end
+    end
+
+  end
+
   def scaffolds(options = "")
     parse
+
+    schema_diff
 
     puts("","--- SCAFFOLDS ---","") unless @quiet
 
@@ -92,7 +249,8 @@ class Generator
       `#{sc} #{options.gsub("--force","")} --skip --no-migrations`
 
       File.delete("#{Rails.root}/app/views/#{name.underscore.pluralize}/_form.html.erb")
-      sc = "rails g scaffold #{name} " + model['attributes'].reject{ | k, v| v['hidden'] }.map{ |k,v| k + ':' + v['type'].sub(/yaml|hash|object|cache/i,"text") }.join(' ') + " " + model['belongs_to'].reject{ | k, v| v['hidden'] }.map{ |k,v| k + ':references' + (v['polymorphic'] ? "{polymorphic}" : "") }.join(' ')
+      sc = "rails g scaffold #{name} " + model['attributes'].reject{ | k, v| v['hidden'] }.map{ |k,v| k + ':' + v['type'].sub(/yaml|hash|object|cache/i,"text") }.join(' ') + " " +
+        model['belongs_to'].reject{ |k, v| v['hidden'] }.map{ |k,v| k + ':references' + (v['polymorphic'] ? "{polymorphic}" : "") }.join(' ')
       puts("form: #{sc}") unless @quiet
       `#{sc} #{options.gsub("--force","")} --skip --no-migrations`
     end if !options.include?("--no-scaffold") && !options.include?("--migrations-only")
@@ -112,6 +270,11 @@ class Generator
       puts("migration: cd #{Rails::root} && #{sc} --skip --no-test-framework") unless @quiet
       `cd #{Rails::root} && #{sc} --skip --no-test-framework`
     end if options.include?("--migrations-only")
+
+
+    schema_diff() unless options.include?("--migrations-only")
+    #$ rails generate migration AddPartNumberToProducts part_number:string:index
+    #sc = "rails g model #{name} " + model['attributes'].map{ |k,v| k + ':' + v['type'].sub(/yaml|hash|object|cache/i,"text") }.join(' ') + " " + model['belongs_to'].map{ |k,v| k + ':references' + (v['polymorphic'] ? "{polymorphic}" : "") }.join(' ')
 
     if options.include?("--migrations-only")
       cleanup(ddl: true, mixins: false)
