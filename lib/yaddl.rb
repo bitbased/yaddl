@@ -202,12 +202,12 @@ class Generator
       v2 = verb == "Add" ? "To" : "On"
       if changes.count > 0
         index = ""
-        while Dir.glob("#{Rails.root}/db/migrate/*_#{summary}#{v2}#{name.pluralize}#{index}".underscore.downcase+".rb").count > 0
+        while Dir.glob("#{Rails.root}/db/migrate/*" + "_" + "#{summary}#{v2}#{name.pluralize}#{index}".underscore.downcase+".rb").count > 0
           index = 1 if index == ""
           index += 1
         end
 
-        puts DateTime.now.strftime("%Y%m%d%H%M%S") + "_#{summary}#{v2}#{name.pluralize}#{index}".underscore.downcase + ".rb"
+        puts DateTime.now.strftime("%Y%m%d%H%M%S") + "_" + "#{summary}#{v2}#{name.pluralize}#{index}".underscore.downcase + ".rb"
         File.write("#{Rails.root}/db/migrate/" + DateTime.now.strftime("%Y%m%d%H%M%S") + "_#{summary}#{v2}#{name.pluralize}#{index}".underscore.downcase+".rb", "class #{summary}#{v2}#{ name.pluralize }#{index} < ActiveRecord::Migration
   def change
     #{changes.join("\n    ")}
