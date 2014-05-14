@@ -275,7 +275,7 @@ end
     end if options.include?("--migrations-only")
 
 
-    schema_diff() unless options.include?("--migrations-only")
+    schema_diff() if options.include?("--migrations-only")
     #$ rails generate migration AddPartNumberToProducts part_number:string:index
     #sc = "rails g model #{name} " + model['attributes'].map{ |k,v| k + ':' + v['type'].sub(/yaml|hash|object|cache/i,"text") }.join(' ') + " " + model['belongs_to'].map{ |k,v| k + ':references' + (v['polymorphic'] ? "{polymorphic}" : "") }.join(' ')
 
