@@ -222,8 +222,6 @@ end
   def scaffolds(options = "")
     parse
 
-    schema_diff
-
     puts("","--- SCAFFOLDS ---","") unless @quiet
 
     models.reject{ |k,v| k[0] == "@"}.each do |name,model|
