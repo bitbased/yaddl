@@ -125,6 +125,26 @@ class Generator
                 schema[attr_table] ||= {}
                 schema[attr_table].delete(attr_name)
               end
+              if line =~ /^\s*rename_column(\s+|\().*$/
+                #add_column(table_name, column_name, type, options)
+                #change_column(table_name, column_name, type, options)
+                attr_table= line.sub(/^\s*[a-z_]+(\s+|\()\:([a-z_]+).*,.*\:([a-z_]+).*,.*\:([a-z_]+).*$/,'\2').strip
+                attr_name = line.sub(/^\s*[a-z_]+(\s+|\()\:([a-z_]+).*,.*\:([a-z_]+).*,.*\:([a-z_]+).*$/,'\3').strip
+                attr_rename = line.sub(/^\s*[a-z_]+(\s+|\()\:([a-z_]+).*,.*\:([a-z_]+).*,.*\:([a-z_]+).*$/,'\4').strip
+
+                schema[attr_table] ||= {}
+                attr_changed = !!schema[attr_table][attr_name]
+                schema[attr_table][attr_name] ||= {}
+                schema[attr_table][attr_rename] = schema[attr_table][attr_name]
+                schema[attr_table].delete(attr_name)
+              end
+              if line =~ /^\s*rename_table(\s+|\().*$/
+                attr_table= line.sub(/^\s*[a-z_]+(\s+|\()\:([a-z_]+).*,.*\:([a-z_]+).*$/,'\2').strip
+                attr_rename = line.sub(/^\s*[a-z_]+(\s+|\()\:([a-z_]+).*,.*\:([a-z_]+).*$/,'\3').strip
+                schema[attr_table] ||= {}
+                schema[attr_rename] = schema[attr_table]
+                schema[attr_table].delete(attr_name)
+              end
               if line =~ /^\s*(add_column|change_column)(\s+|\().*$/
                 #add_column(table_name, column_name, type, options)
                 #change_column(table_name, column_name, type, options)
