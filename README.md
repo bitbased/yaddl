@@ -61,6 +61,7 @@ Legend:
 - *Multiplicity - has_many
 - **ManyToMany:OptionalBackingTable(join_model:attributes) - has and belongs to many
 - attribute:*Reference - polymorphic association reference entry
+- .SubDocument - local/sub document, entry, ex: .SubDocument, .*SubDocumentArray, .sub_name:NamedSubDocument
 - @Mixin - define or use mixin
 - ___ - mixin name placeholder for named:@Mixin (these work in mixin code blocks and mixin attribute names)
 - mmm/MMM(s) - model name placeholders (these work in any code blocks and mixin attribute names)
